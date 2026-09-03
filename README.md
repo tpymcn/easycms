@@ -21,7 +21,7 @@
 - 文章的发布、编辑、删除，支持排序、启用/禁用
 - **富文本编辑器**：自建零依赖编辑器（contenteditable + execCommand），支持加粗/斜体/列表/引用/对齐/链接/图片上传等
 - **缩略图上传**：支持 jpg/png/gif/webp，限 5MB，自动存储到 `public/uploads/YYYYMMDD/`
-- **文章密码加密**：设置密码后前台详情页仅显示标题，需输入密码验证后才显示内容（md5 存储，Session 标记验证状态）
+- **文章密码加密**：设置密码后前台详情页仅显示标题，需输入密码验证后才显示内容（password_hash 存储，Session 标记验证状态）
 - **URL 别名（slug）**：文章详情页通过 slug 访问（`/detail/{slug}`），无 slug 时自动回退到 ID
 - **浏览量统计**：详情页访问自动累加浏览量
 
@@ -149,7 +149,8 @@ chown www:www sqlite.db
 wwwroot/
 ├── app/                            # 应用目录
 │   ├── command/
-│   │   └── Install.php             # 数据库安装命令（建表 + 默认数据）
+│   │   ├── Install.php             # 数据库安装命令（建表 + 默认数据）
+│   │   └── ResetPassword.php       # 重置管理员密码命令
 │   ├── controller/
 │   │   ├── Index.php               # 前台控制器（首页/详情/分类/密码验证/站点关闭拦截）
 │   │   └── manage/                 # 后台控制器
@@ -222,6 +223,15 @@ composer install
 # 初始化数据库（建表 + 默认数据，可重复执行）
 php think cms:install
 
+# 重置管理员密码（交互模式，会提示输入新密码）
+php think cms:reset-password
+
+# 重置指定管理员密码
+php think cms:reset-password admin
+
+# 直接设置新密码（非交互模式，适合脚本调用）
+php think cms:reset-password admin --password=newpass123
+
 # 清理缓存（修改路由或模板后建议执行）
 rm -rf runtime/temp/* runtime/route*
 ```
@@ -234,6 +244,25 @@ rm -rf runtime/temp/* runtime/route*
 1. `public/` 为文档根目录
 2. Nginx 伪静态规则为 `rewrite ^(.*)$ /index.php?s=/$1 last;`
 3. 清理缓存：`rm -rf runtime/temp/* runtime/route*`
+
+### Q: 忘记管理员密码怎么办？
+
+通过命令行重置密码，无需登录后台：
+
+```bash
+# 交互模式（会提示输入新密码，输入时不回显）
+php think cms:reset-password
+
+# 指定用户名重置
+php think cms:reset-password admin
+
+# 直接指定新密码（非交互模式）
+php think cms:reset-password admin --password=newpass123
+```
+
+重置后即可使用新密码登录 `http://your-domain/manage`。
+
+> 密码要求至少 6 位。交互模式下需要输入两次以确认。
 
 ### Q: 数据库在哪？
 
